@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Filmes</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+
+    <script src="xmltojson.js"></script>
+
+    <script>
+        function getFilmes() {
+            let xmlHttp = new XMLHttpRequest(); // Adicione os parênteses
+            xmlHttp.open('GET', 'http://localhost/ajax/filmes.xml', true);
+
+            xmlHttp.onreadystatechange = () => {
+                if (xmlHttp.readyState === 4) {
+                    if (xmlHttp.status === 200) {
+                        let XMLFilmes = xmlHttp.responseText;
+                        let parser = new DOMParser();
+                        let domFilmes = parser.parseFromString(XMLFilmes, 'text/xml');
+
+                        let jsonFilmes = xmlToJson(domFilmes);
+
+                        // Verifique se jsonFilmes['filmes'] e jsonFilmes['filmes']['filme'] estão definidos
+                        if (jsonFilmes['filmes'] && jsonFilmes['filmes']['filme']) {
+                            for (let i in jsonFilmes['filmes']['filme']) {
+                                let item = jsonFilmes['filmes']['filme'][i];
+
+                                let divRow = document.createElement('div');
+                                divRow.className = 'row';
+
+                                let divCol = document.createElement('div');
+                                divCol.className = 'col';
+
+                                let p1 = document.createElement('p');
+                                p1.innerHTML = '<strong>Título: </strong> ' + (item['titulo'] ? item['titulo']['#text'] : 'Não disponível');
+
+                                let p2 = document.createElement('p');
+                                p2.innerHTML = '<strong>Resumo: </strong> ' + (item['resumo'] ? item['resumo']['#text'] : 'Não disponível');
+
+                                let genero = '';
+                                if (item['genero']) {
+                                    for (let g in item['genero']) {
+                                        genero += item['genero'][g]['#text'] + ', ';
+                                    }
+                                    genero = genero.slice(0, -2); 
+                                }
+
+                                let p3 = document.createElement('p');
+                                p3.innerHTML = '<strong>Gênero: </strong> ' + (genero ? genero : 'Não disponível');
+
+                                let elenco = ''
+                                for (let e in item.elenco.ator) {
+                                    if (elenco) elenco += ', ' 
+
+                                    elenco += item.elenco.ator [e] ['#text']
+                                    
+                                }
+                                let p4 = document.createElement('p');
+                                p4.innerHTML = '<strong>Elenco: </strong> ' + elenco
+
+                                let p5 = document.createElement('p');
+                                p5.innerHTML = '<strong>Data de lançamento: </strong> ' + item.dataLancamento ['#text'] + '(' + item.dataLancamento ['@attributes'] ['pais'] + ')'
+
+                                let hr = document.createElement('hr');
+
+                                divRow.appendChild(divCol);
+                                divCol.appendChild(p1);
+                                divCol.appendChild(p2);
+                                divCol.appendChild(p3);
+                                divCol.appendChild(p4);
+                                divCol.appendChild(p5);
+                                divCol.appendChild(hr);
+
+                                document.getElementById('lista').appendChild(divRow);
+                            }
+                        } else {
+                            console.error('Estrutura JSON inesperada:', jsonFilmes);
+                        }
+                    } else if (xmlHttp.status === 404) {
+                        console.error('Arquivo XML não encontrado');
+                    } else {
+                        console.error('Erro na solicitação:', xmlHttp.status);
+                    }
+                }
+            };
+
+            xmlHttp.send();
+        }
+    </script>
+</head>
+<body>
+    <nav class="navbar navbar-light bg-light mb-4">
+        <div class="container">
+            <div class="navbar-brand mb-0 h1">
+                <h3>Catálogo de filmes</h3>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container" id="lista">
+        <div class="row mb-5">
+            <div class="col">
+                <button class="btn btn-info" type="button" onclick="getFilmes()">Lista de Filmes</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
